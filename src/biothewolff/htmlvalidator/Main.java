@@ -7,13 +7,13 @@ import java.io.FileReader;
 
 public class Main
 {
-    public static void main(String[] args) throws Exception {
-        System.out.println("Hello world!");
+    public static void main(String[] args) throws Exception
+    {
 
         if (args.length > 0 && args[0] != null)
         {
             // Grab file from arguments
-            if (!args[0].endsWith(".html") || !args[0].endsWith(".htm")) throw new Exception("Wrong file extension (accepted: .htm, .html)");
+            if (!args[0].endsWith(".html") && !args[0].endsWith(".htm")) throw new Exception("Wrong file extension (accepted: .htm, .html)");
             FileReader file = new FileReader(args[0]);
 
             try(BufferedReader br = new BufferedReader(file)) {
