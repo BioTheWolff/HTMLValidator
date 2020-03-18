@@ -4,6 +4,8 @@ import biothewolff.htmlvalidator.core.tags.Tag;
 import com.sun.istack.internal.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is the main class which will read the code
@@ -125,8 +127,10 @@ public class HTMLReader
 
                     if (beingRead.toString().contains(" ")) {
                         name = beingRead.toString().split(" ")[0];
-                        String[] content_list = beingRead.toString().split(" ");
-                        attrs = String.join(" ", content_list);
+
+                        ArrayList<String> attrs_list = new ArrayList<>(Arrays.asList(beingRead.toString().split(" ")));
+                        attrs_list.remove(name);
+                        attrs = String.join(" ", attrs_list);
                     }
                     else
                     {

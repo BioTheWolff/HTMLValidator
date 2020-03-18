@@ -47,15 +47,17 @@ public class Tag
 
     public void displayTag(int indent, int offset)
     {
-        if (indent == 0)
+        // build new
+        String display_offset = "";
+        if (indent > 0) display_offset = new String(new char[indent]).replace("\0", " ");
+
+        // display name (and attributes if they exist)
+        if (attributes.containsKey("attrs"))
         {
-            // print the name of the tag
-            System.out.println(name);
+            System.out.println(display_offset + "└─ " + name + " (" + attributes.get("attrs") + ")");
         }
         else
         {
-            String display_offset = new String(new char[indent]).replace("\0", " ");
-
             System.out.println(display_offset + "└─ " + name);
         }
 
