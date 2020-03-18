@@ -16,6 +16,7 @@ public class Main
             if (!args[0].endsWith(".html") && !args[0].endsWith(".htm")) throw new Exception("Wrong file extension (accepted: .htm, .html)");
             FileReader file = new FileReader(args[0]);
 
+            // Try and read the file
             try(BufferedReader br = new BufferedReader(file)) {
                 StringBuilder sb = new StringBuilder();
                 String line = br.readLine();
@@ -29,6 +30,7 @@ public class Main
 
                 HTMLReader reader = new HTMLReader(file_text);
                 reader.readAndParse();
+                reader.displayDocument(2);
             }
 
         }

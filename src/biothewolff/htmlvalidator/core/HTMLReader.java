@@ -1,10 +1,9 @@
 package biothewolff.htmlvalidator.core;
 
-import biothewolff.htmlvalidator.core.tags.HTMLDocument;
 import biothewolff.htmlvalidator.core.tags.Tag;
+import com.sun.istack.internal.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * This class is the main class which will read the code
@@ -13,10 +12,13 @@ public class HTMLReader
 {
 
     public final String[] text;
+    public Tag document;
+
     private boolean hasBeenRead = false;
 
     // the current opened tags list, in FILO mode
-    private Map<String, Tag> currentOpenedTags = new HashMap<>();
+    private ArrayList<String> openedTagsNames = new ArrayList<>();
+    private ArrayList<Tag> openedTagsClasses = new ArrayList<>();
 
     /*
     the two string builders.
@@ -35,12 +37,12 @@ public class HTMLReader
 
     public void readAndParse()
     {
-        HTMLDocument document = new HTMLDocument();
-
         for (String s : text)
         {
             evaluateChar(s);
         }
+
+        hasBeenRead = true;
     }
 
     private void evaluateChar(String s)
@@ -75,7 +77,8 @@ public class HTMLReader
                     state = ReaderStates.IN_CLOSE_TAG;
                     break;
                 default:
-                    state = ReaderStates.IN_OPEN_TAG; beingRead.append(s);
+                    state = ReaderStates.IN_OPEN_TAG;
+                    beingRead.append(s);
                     break;
             }
         }
@@ -114,10 +117,31 @@ public class HTMLReader
         else if (state.equals(ReaderStates.IN_OPEN_TAG) || state.equals(ReaderStates.IN_DOCTYPE))
         {
             if (">".equals(s)) {
-                state = ReaderStates.OUT_OF_TAG;
-                System.out.println("open/doctype tag content: " + beingRead.toString());
+                //System.out.println("open/doctype tag content: " + beingRead.toString());
+
+                if (state.equals(ReaderStates.IN_OPEN_TAG))
+                {
+                    String name, attrs;
+
+                    if (beingRead.toString().contains(" ")) {
+                        name = beingRead.toString().split(" ")[0];
+                        String[] content_list = beingRead.toString().split(" ");
+                        attrs = String.join(" ", content_list);
+                    }
+                    else
+                    {
+                        name = beingRead.toString();
+                        attrs = null;
+                    }
+
+                    logOpenTag(name);
+                    putAttributesInTag(attrs);
+                }
+
                 purgeContent();
-            } else {
+                state = ReaderStates.OUT_OF_TAG;
+            }
+            else {
                 beingRead.append(s);
             }
         }
@@ -126,7 +150,21 @@ public class HTMLReader
         {
             if (">".equals(s)) {
                 state = ReaderStates.OUT_OF_TAG;
-                System.out.println("close tag content: " + beingRead.toString());
+                //System.out.println("close tag content: " + beingRead.toString());
+
+                String name;
+
+                if (beingRead.toString().contains(" "))
+                {
+                    name = beingRead.toString().split(" ")[0];
+                }
+                else
+                {
+                    name = beingRead.toString();
+                }
+
+                evaluateTagClosure(name, null);
+
                 purgeContent();
             } else {
                 beingRead.append(s);
@@ -158,5 +196,76 @@ public class HTMLReader
     private void purgeContent()
     {
         beingRead.delete(0, beingRead.toString().length());
+    }
+
+    // LOGGING
+    private void logOpenTag(String name)
+    {
+        openedTagsNames.add(name);
+        openedTagsClasses.add(new Tag(name));
+    }
+
+    private void putAttributesInTag(@Nullable String attributes)
+    {
+        if (attributes == null) return;
+        //TODO: SPLIT ATTRIBUTES
+        openedTagsClasses.get(openedTagsNames.size()-1).addAttribute("attrs", attributes);
+    }
+
+    private void putContentInTag(@Nullable String content)
+    {
+
+    }
+
+    /**
+     * This function evaluates if the tag can be closed and merged into parent or is an error because wasn't opened
+     * @param name the name of the tag
+     * @param content the attributes of the tag, non parsed
+     */
+    private void evaluateTagClosure(String name, @Nullable String content)
+    {
+        int index = openedTagsNames.lastIndexOf(name);
+
+        // if tag doesn't exist (isn't opened) or is not in the last index (tag closure skip)
+        if (index == -1 || index < openedTagsNames.size() - 1)
+        {
+            System.out.println("wrongly placed closure " + name);
+        }
+        else
+        {
+            putContentInTag(content);
+            closeTagAndMergeWithParent();
+        }
+    }
+
+    private void closeTagAndMergeWithParent()
+    {
+        if (openedTagsNames.size() == 1)
+        {
+            // only one tag in the list, should be HTML tag
+            document = openedTagsClasses.get(0);
+
+            openedTagsNames.remove(0);
+            openedTagsClasses.remove(0);
+        }
+        else
+        {
+            int parent_index = openedTagsNames.size()-2;
+            int child_index = openedTagsNames.size()-1;
+
+            Tag parent = openedTagsClasses.get(parent_index);
+            Tag child = openedTagsClasses.get(child_index);
+
+            parent.addChild(child);
+
+            openedTagsNames.remove(child_index);
+            openedTagsClasses.remove(child_index);
+        }
+
+    }
+
+    public void displayDocument(int offset)
+    {
+        if (hasBeenRead && document != null) document.displayTag(0, offset);
     }
 }
