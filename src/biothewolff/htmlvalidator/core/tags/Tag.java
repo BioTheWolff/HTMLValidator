@@ -25,10 +25,7 @@ public class Tag
     public boolean hasChildren() { return !list.isEmpty(); }
 
     // Modifiers
-    public void addChild(Tag toAdd)
-    {
-        this.list.add(toAdd);
-    }
+    public void addChild(Tag toAdd) { this.list.add(toAdd); }
 
     public boolean addAttribute(String name, String value)
     {
@@ -38,5 +35,36 @@ public class Tag
         this.attributes.putIfAbsent(name, value);
 
         return flag;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Tag{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+
+    public void displayTag(int indent, int offset)
+    {
+        if (indent == 0)
+        {
+            // print the name of the tag
+            System.out.println(name);
+        }
+        else
+        {
+            String display_offset = new String(new char[indent]).replace("\0", " ");
+
+            System.out.println(display_offset + "└─ " + name);
+        }
+
+        if (hasChildren()) {
+            // has children, so we loop through the children and call the same function
+            for (Tag child : list) {
+                child.displayTag(indent + offset, offset);
+            }
+        }
+
     }
 }
