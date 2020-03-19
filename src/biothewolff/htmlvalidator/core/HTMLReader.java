@@ -5,7 +5,6 @@ import com.sun.istack.internal.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * This class is the main class which will read the code
@@ -21,6 +20,13 @@ public class HTMLReader
     // the current opened tags list, in FILO mode
     private ArrayList<String> openedTagsNames = new ArrayList<>();
     private ArrayList<Tag> openedTagsClasses = new ArrayList<>();
+
+    // self-closing tags list
+    private String[] self_closing_tags = new String[] {
+            "area", "base", "br", "col", "embed", "hr",
+            "img", "input", "link", "meta", "param", "source",
+            "track", "wbr"
+    };
 
     /*
     the two string builders.
@@ -119,28 +125,8 @@ public class HTMLReader
         else if (state.equals(ReaderStates.IN_OPEN_TAG) || state.equals(ReaderStates.IN_DOCTYPE))
         {
             if (">".equals(s)) {
-                //System.out.println("open/doctype tag content: " + beingRead.toString());
 
-                if (state.equals(ReaderStates.IN_OPEN_TAG))
-                {
-                    String name, attrs;
-
-                    if (beingRead.toString().contains(" ")) {
-                        name = beingRead.toString().split(" ")[0];
-
-                        ArrayList<String> attrs_list = new ArrayList<>(Arrays.asList(beingRead.toString().split(" ")));
-                        attrs_list.remove(name);
-                        attrs = String.join(" ", attrs_list);
-                    }
-                    else
-                    {
-                        name = beingRead.toString();
-                        attrs = null;
-                    }
-
-                    logOpenTag(name);
-                    putAttributesInTag(attrs);
-                }
+                if (state.equals(ReaderStates.IN_OPEN_TAG)) evaluateRegisterOpenTag(beingRead.toString());
 
                 purgeContent();
                 state = ReaderStates.OUT_OF_TAG;
@@ -154,20 +140,8 @@ public class HTMLReader
         {
             if (">".equals(s)) {
                 state = ReaderStates.OUT_OF_TAG;
-                //System.out.println("close tag content: " + beingRead.toString());
 
-                String name;
-
-                if (beingRead.toString().contains(" "))
-                {
-                    name = beingRead.toString().split(" ")[0];
-                }
-                else
-                {
-                    name = beingRead.toString();
-                }
-
-                evaluateTagClosure(name, null);
+                evaluateRegisterCloseTag(beingRead.toString());
 
                 purgeContent();
             } else {
@@ -192,6 +166,7 @@ public class HTMLReader
 
     }
 
+    // PURGES
     private void purgeBuffer()
     {
         buffer.delete(0, buffer.toString().length());
@@ -202,32 +177,40 @@ public class HTMLReader
         beingRead.delete(0, beingRead.toString().length());
     }
 
-    // LOGGING
-    private void logOpenTag(String name)
+    // LOGGING EVALUATORS
+    private void evaluateRegisterOpenTag(String content)
     {
-        openedTagsNames.add(name);
-        openedTagsClasses.add(new Tag(name));
+        String name, attrs;
+
+        if (content.contains(" ")) {
+            name = content.split(" ")[0];
+
+            ArrayList<String> attrs_list = new ArrayList<>(Arrays.asList(content.split(" ")));
+            attrs_list.remove(name);
+            attrs = String.join(" ", attrs_list);
+        }
+        else
+        {
+            name = content;
+            attrs = null;
+        }
+
+        registerOpenTag(name);
+        putAttributesInTag(attrs);
+
+        if (new ArrayList<>(Arrays.asList(self_closing_tags)).contains(name))
+        {
+            closeTagAndMergeWithParent();
+        }
     }
 
-    private void putAttributesInTag(@Nullable String attributes)
+    private void evaluateRegisterCloseTag(String content)
     {
-        if (attributes == null) return;
-        //TODO: SPLIT ATTRIBUTES
-        openedTagsClasses.get(openedTagsNames.size()-1).addAttribute("attrs", attributes);
-    }
+        String name;
 
-    private void putContentInTag(@Nullable String content)
-    {
+        if (beingRead.toString().contains(" ")) name = beingRead.toString().split(" ")[0];
+        else name = content;
 
-    }
-
-    /**
-     * This function evaluates if the tag can be closed and merged into parent or is an error because wasn't opened
-     * @param name the name of the tag
-     * @param content the attributes of the tag, non parsed
-     */
-    private void evaluateTagClosure(String name, @Nullable String content)
-    {
         int index = openedTagsNames.lastIndexOf(name);
 
         // if tag doesn't exist (isn't opened) or is not in the last index (tag closure skip)
@@ -235,11 +218,14 @@ public class HTMLReader
         {
             System.out.println("wrongly placed closure " + name);
         }
-        else
-        {
-            putContentInTag(content);
-            closeTagAndMergeWithParent();
-        }
+        else closeTagAndMergeWithParent();
+    }
+
+    // LOGGING TAGS
+    private void registerOpenTag(String name)
+    {
+        openedTagsNames.add(name);
+        openedTagsClasses.add(new Tag(name));
     }
 
     private void closeTagAndMergeWithParent()
@@ -268,6 +254,15 @@ public class HTMLReader
 
     }
 
+    // LOGGING TAG CONTENTS
+    private void putAttributesInTag(@Nullable String attributes)
+    {
+        if (attributes == null) return;
+        //TODO: SPLIT ATTRIBUTES
+        openedTagsClasses.get(openedTagsNames.size()-1).addAttribute("attrs", attributes);
+    }
+
+    // DISPLAY
     public void displayDocument(int offset)
     {
         if (hasBeenRead && document != null) document.displayTag(0, offset);
