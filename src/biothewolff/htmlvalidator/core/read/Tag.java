@@ -1,4 +1,4 @@
-package biothewolff.htmlvalidator.core.tags;
+package biothewolff.htmlvalidator.core.read;
 
 import java.util.ArrayList;
 import java.util.HashMap;

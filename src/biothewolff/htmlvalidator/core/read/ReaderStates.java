@@ -1,4 +1,4 @@
-package biothewolff.htmlvalidator.core;
+package biothewolff.htmlvalidator.core.read;
 
 public enum ReaderStates
 {

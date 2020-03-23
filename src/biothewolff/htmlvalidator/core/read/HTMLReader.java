@@ -1,6 +1,7 @@
-package biothewolff.htmlvalidator.core;
+package biothewolff.htmlvalidator.core.read;
 
-import biothewolff.htmlvalidator.core.tags.Tag;
+import biothewolff.htmlvalidator.core.validate.util.ValidationError;
+import biothewolff.htmlvalidator.core.validate.util.ValidationErrorTypes;
 import com.sun.istack.internal.Nullable;
 
 import java.util.ArrayList;
@@ -17,16 +18,18 @@ public class HTMLReader
 
     private boolean hasBeenRead = false;
 
-    // the current opened tags list, in FILO mode
+    // the current opened tags lists, in FILO mode
     private ArrayList<String> openedTagsNames = new ArrayList<>();
     private ArrayList<Tag> openedTagsClasses = new ArrayList<>();
 
+    private ArrayList<ValidationError> validationErrors = new ArrayList<>();
+
     // self-closing tags list
-    private String[] self_closing_tags = new String[] {
+    private ArrayList<String> self_closing_tags = new ArrayList<>(Arrays.asList(
             "area", "base", "br", "col", "embed", "hr",
             "img", "input", "link", "meta", "param", "source",
             "track", "wbr"
-    };
+    ));
 
     /*
     the two string builders.
@@ -49,6 +52,9 @@ public class HTMLReader
         {
             evaluateChar(s);
         }
+
+        if (!openedTagsNames.isEmpty())
+            validationErrors.add(new ValidationError(ValidationErrorTypes.DOCUMENT_LEFT_OPEN, null));
 
         hasBeenRead = true;
     }
@@ -198,7 +204,7 @@ public class HTMLReader
         registerOpenTag(name);
         putAttributesInTag(attrs);
 
-        if (new ArrayList<>(Arrays.asList(self_closing_tags)).contains(name))
+        if (self_closing_tags.contains(name))
         {
             closeTagAndMergeWithParent();
         }
@@ -211,12 +217,22 @@ public class HTMLReader
         if (beingRead.toString().contains(" ")) name = beingRead.toString().split(" ")[0];
         else name = content;
 
+        if (self_closing_tags.contains(name))
+        {
+            validationErrors.add(new ValidationError(ValidationErrorTypes.VOID_ELEMENT_CLOSED, name));
+            return;
+        }
+
         int index = openedTagsNames.lastIndexOf(name);
 
         // if tag doesn't exist (isn't opened) or is not in the last index (tag closure skip)
-        if (index == -1 || index < openedTagsNames.size() - 1)
+        if (index == -1)
         {
-            System.out.println("wrongly placed closure " + name);
+            validationErrors.add(new ValidationError(ValidationErrorTypes.CLOSING_UNOPENED_TAG, name));
+        }
+        else if (index < openedTagsNames.size() - 1)
+        {
+            validationErrors.add(new ValidationError(ValidationErrorTypes.CLOSING_PARENT_BEFORE_CHILDREN, name));
         }
         else closeTagAndMergeWithParent();
     }
@@ -266,5 +282,26 @@ public class HTMLReader
     public void displayDocument(int offset)
     {
         if (hasBeenRead && document != null) document.displayTag(0, offset);
+    }
+
+    public void displayPreValidationErrors()
+    {
+        if (validationErrors.isEmpty())
+        {
+            System.out.println("No pre-validation error found.");
+            return;
+        }
+
+        System.out.println("--- Pre-validation errors ---");
+        for (ValidationError e : validationErrors)
+        {
+            System.out.println(e);
+        }
+        System.out.println("--- END ---");
+    }
+
+    public boolean hasPreValidationErrors()
+    {
+        return hasBeenRead && !validationErrors.isEmpty();
     }
 }
