@@ -10,8 +10,7 @@ import java.util.Arrays;
 /**
  * This class is the main class which will read the code
  */
-public class HTMLReader
-{
+public class HTMLReader {
 
     public final String[] text;
     public Tag document;
@@ -40,16 +39,13 @@ public class HTMLReader
     private StringBuilder beingRead = new StringBuilder();
     private ReaderStates state;
 
-    public HTMLReader(String toRead)
-    {
+    public HTMLReader(String toRead) {
         text = toRead.split("");
         state = ReaderStates.IDLE;
     }
 
-    public void readAndParse()
-    {
-        for (String s : text)
-        {
+    public void readAndParse() {
+        for (String s : text) {
             evaluateChar(s);
         }
 
@@ -59,17 +55,14 @@ public class HTMLReader
         hasBeenRead = true;
     }
 
-    private void evaluateChar(String s)
-    {
+    private void evaluateChar(String s) {
 
         // initialise system
         if (state.equals(ReaderStates.IDLE)) state = ReaderStates.OUT_OF_TAG;
 
         // Out of tag
-        if (state.equals(ReaderStates.OUT_OF_TAG))
-        {
-            switch (s)
-            {
+        if (state.equals(ReaderStates.OUT_OF_TAG)) {
+            switch (s) {
                 case "<":
                     state = ReaderStates.IN_TAG_UNKNOWN;
                     break;
@@ -79,10 +72,8 @@ public class HTMLReader
             }
         }
         // Saw a start of tag ( < ) and waiting to define its type
-        else if (state.equals(ReaderStates.IN_TAG_UNKNOWN))
-        {
-            switch (s)
-            {
+        else if (state.equals(ReaderStates.IN_TAG_UNKNOWN)) {
+            switch (s) {
                 case "!":
                     state = ReaderStates.WAITING_FOR_COMPLETION;
                     buffer.append("<!");
@@ -97,53 +88,43 @@ public class HTMLReader
             }
         }
         // Waiting for completion of comment tag
-        else if (state.equals(ReaderStates.WAITING_FOR_COMPLETION))
-        {
+        else if (state.equals(ReaderStates.WAITING_FOR_COMPLETION)) {
             String bstr = buffer.toString();
 
             // HTML comment
-            if ("-".equals(s))
-            {
-                if ("<!".equals(bstr) || "<!-".equals(bstr))
-                {
+            if ("-".equals(s)) {
+                if ("<!".equals(bstr) || "<!-".equals(bstr)) {
                     buffer.append(s);
-                }
-                else if ("<!--".equals(bstr))
-                {
+                } else if ("<!--".equals(bstr)) {
                     state = ReaderStates.IN_COMMENT;
-                }
-                else System.out.println("Wrong comment type");
+                } else System.out.println("Wrong comment type");
             }
 
             // buffer should be containing <!DOCTYPE by now
             if (bstr.length() == 9) {
                 if (!bstr.equals("<!DOCTYPE")) System.out.println("Wrong doctype");
-                else state = ReaderStates.IN_DOCTYPE; purgeBuffer();
-            }
-            else
-            {
+                else state = ReaderStates.IN_DOCTYPE;
+                purgeBuffer();
+            } else {
                 // add to buffer
                 buffer.append(s);
             }
 
         }
         // in opened tag
-        else if (state.equals(ReaderStates.IN_OPEN_TAG) || state.equals(ReaderStates.IN_DOCTYPE))
-        {
+        else if (state.equals(ReaderStates.IN_OPEN_TAG) || state.equals(ReaderStates.IN_DOCTYPE)) {
             if (">".equals(s)) {
 
                 if (state.equals(ReaderStates.IN_OPEN_TAG)) evaluateRegisterOpenTag(beingRead.toString());
 
                 purgeContent();
                 state = ReaderStates.OUT_OF_TAG;
-            }
-            else {
+            } else {
                 beingRead.append(s);
             }
         }
         // in close tag
-        else if (state.equals(ReaderStates.IN_CLOSE_TAG))
-        {
+        else if (state.equals(ReaderStates.IN_CLOSE_TAG)) {
             if (">".equals(s)) {
                 state = ReaderStates.OUT_OF_TAG;
 
@@ -155,17 +136,15 @@ public class HTMLReader
             }
         }
         // in comment
-        else if (state.equals(ReaderStates.IN_COMMENT))
-        {
+        else if (state.equals(ReaderStates.IN_COMMENT)) {
             String bstr = buffer.toString();
 
-            if ("-".equals(s) || ">".equals(s) || !"".equals(bstr))
-            {
+            if ("-".equals(s) || ">".equals(s) || !"".equals(bstr)) {
                 // if we are in "" or "-" case and s equals "-"
-                if (( "".equals(bstr) || "-".equals(bstr) ) && "-".equals(s)) buffer.append(s);
-                // if we have "--" in buffer and s equals ">" this is a close comment
+                if (("".equals(bstr) || "-".equals(bstr)) && "-".equals(s)) buffer.append(s);
+                    // if we have "--" in buffer and s equals ">" this is a close comment
                 else if ("--".equals(bstr) && ">".equals(s)) state = ReaderStates.OUT_OF_TAG;
-                // this is a normal comment with two signs, do nothing and purge the buffer
+                    // this is a normal comment with two signs, do nothing and purge the buffer
                 else purgeBuffer();
             }
         }
@@ -173,19 +152,16 @@ public class HTMLReader
     }
 
     // PURGES
-    private void purgeBuffer()
-    {
+    private void purgeBuffer() {
         buffer.delete(0, buffer.toString().length());
     }
 
-    private void purgeContent()
-    {
+    private void purgeContent() {
         beingRead.delete(0, beingRead.toString().length());
     }
 
     // LOGGING EVALUATORS
-    private void evaluateRegisterOpenTag(String content)
-    {
+    private void evaluateRegisterOpenTag(String content) {
         String name, attrs;
 
         if (content.contains(" ")) {
@@ -194,9 +170,7 @@ public class HTMLReader
             ArrayList<String> attrs_list = new ArrayList<>(Arrays.asList(content.split(" ")));
             attrs_list.remove(name);
             attrs = String.join(" ", attrs_list);
-        }
-        else
-        {
+        } else {
             name = content;
             attrs = null;
         }
@@ -204,21 +178,18 @@ public class HTMLReader
         registerOpenTag(name);
         putAttributesInTag(attrs);
 
-        if (self_closing_tags.contains(name))
-        {
+        if (self_closing_tags.contains(name)) {
             closeTagAndMergeWithParent();
         }
     }
 
-    private void evaluateRegisterCloseTag(String content)
-    {
+    private void evaluateRegisterCloseTag(String content) {
         String name;
 
         if (beingRead.toString().contains(" ")) name = beingRead.toString().split(" ")[0];
         else name = content;
 
-        if (self_closing_tags.contains(name))
-        {
+        if (self_closing_tags.contains(name)) {
             validationErrors.add(new ValidationError(ValidationErrorTypes.VOID_ELEMENT_CLOSED, name));
             return;
         }
@@ -226,38 +197,29 @@ public class HTMLReader
         int index = openedTagsNames.lastIndexOf(name);
 
         // if tag doesn't exist (isn't opened) or is not in the last index (tag closure skip)
-        if (index == -1)
-        {
+        if (index == -1) {
             validationErrors.add(new ValidationError(ValidationErrorTypes.CLOSING_UNOPENED_TAG, name));
-        }
-        else if (index < openedTagsNames.size() - 1)
-        {
+        } else if (index < openedTagsNames.size() - 1) {
             validationErrors.add(new ValidationError(ValidationErrorTypes.CLOSING_PARENT_BEFORE_CHILDREN, name));
-        }
-        else closeTagAndMergeWithParent();
+        } else closeTagAndMergeWithParent();
     }
 
     // LOGGING TAGS
-    private void registerOpenTag(String name)
-    {
+    private void registerOpenTag(String name) {
         openedTagsNames.add(name);
         openedTagsClasses.add(new Tag(name));
     }
 
-    private void closeTagAndMergeWithParent()
-    {
-        if (openedTagsNames.size() == 1)
-        {
+    private void closeTagAndMergeWithParent() {
+        if (openedTagsNames.size() == 1) {
             // only one tag in the list, should be HTML tag
             document = openedTagsClasses.get(0);
 
             openedTagsNames.remove(0);
             openedTagsClasses.remove(0);
-        }
-        else
-        {
-            int parent_index = openedTagsNames.size()-2;
-            int child_index = openedTagsNames.size()-1;
+        } else {
+            int parent_index = openedTagsNames.size() - 2;
+            int child_index = openedTagsNames.size() - 1;
 
             Tag parent = openedTagsClasses.get(parent_index);
             Tag child = openedTagsClasses.get(child_index);
@@ -271,37 +233,31 @@ public class HTMLReader
     }
 
     // LOGGING TAG CONTENTS
-    private void putAttributesInTag(@Nullable String attributes)
-    {
+    private void putAttributesInTag(@Nullable String attributes) {
         if (attributes == null) return;
         //TODO: SPLIT ATTRIBUTES
-        openedTagsClasses.get(openedTagsNames.size()-1).addAttribute("attrs", attributes);
+        openedTagsClasses.get(openedTagsNames.size() - 1).addAttribute("attrs", attributes);
     }
 
     // DISPLAY
-    public void displayDocument(int offset)
-    {
+    public void displayDocument(int offset) {
         if (hasBeenRead && document != null) document.displayTag(0, offset);
     }
 
-    public void displayPreValidationErrors()
-    {
-        if (validationErrors.isEmpty())
-        {
+    public void displayPreValidationErrors() {
+        if (validationErrors.isEmpty()) {
             System.out.println("No pre-validation error found.");
             return;
         }
 
         System.out.println("--- Pre-validation errors ---");
-        for (ValidationError e : validationErrors)
-        {
+        for (ValidationError e : validationErrors) {
             System.out.println(e);
         }
         System.out.println("--- END ---");
     }
 
-    public boolean hasPreValidationErrors()
-    {
+    public boolean hasPreValidationErrors() {
         return hasBeenRead && !validationErrors.isEmpty();
     }
 }

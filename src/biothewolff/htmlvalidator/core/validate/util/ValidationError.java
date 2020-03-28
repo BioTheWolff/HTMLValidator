@@ -2,13 +2,11 @@ package biothewolff.htmlvalidator.core.validate.util;
 
 import com.sun.istack.internal.Nullable;
 
-public class ValidationError
-{
+public class ValidationError {
     public final ValidationErrorTypes errorType;
     public final String context;
 
-    public ValidationError(ValidationErrorTypes type, @Nullable String context)
-    {
+    public ValidationError(ValidationErrorTypes type, @Nullable String context) {
         this.errorType = type;
         this.context = context;
     }
@@ -20,6 +18,6 @@ public class ValidationError
                 errorType.toString(),
                 errorType.getDisplay(),
                 context
-                );
+        );
     }
 }

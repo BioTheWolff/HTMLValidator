@@ -13,19 +13,27 @@ public enum ValidationErrorTypes {
     private final int level;
     private final String display;
 
-    ValidationErrorTypes(int level, String display)
-    {
+    ValidationErrorTypes(int level, String display) {
         this.level = level;
         this.display = display;
     }
 
     // DISPLAY
-    public String getDisplay() { return this.display; }
+    public String getDisplay() {
+        return this.display;
+    }
 
     // ERROR LEVEL
-    public int getLevel() { return this.level; }
+    public int getLevel() {
+        return this.level;
+    }
 
-    public boolean isError() { return this.level == 0; }
-    public boolean isWarning() { return this.level == 1; }
+    public boolean isError() {
+        return this.level == 0;
+    }
+
+    public boolean isWarning() {
+        return this.level == 1;
+    }
 
 }

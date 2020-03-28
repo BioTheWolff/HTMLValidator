@@ -7,28 +7,29 @@ import java.util.Map;
 /**
  * The basic Tag in html document.
  */
-public class Tag
-{
+public class Tag {
 
     public final String name;
     public ArrayList<Tag> list;
     public Map<String, String> attributes = new HashMap<>();
 
     // Constructor
-    public Tag(String name)
-    {
+    public Tag(String name) {
         this.name = name;
         this.list = new ArrayList<>();
     }
 
     // Checkers
-    public boolean hasChildren() { return !list.isEmpty(); }
+    public boolean hasChildren() {
+        return !list.isEmpty();
+    }
 
     // Modifiers
-    public void addChild(Tag toAdd) { this.list.add(toAdd); }
+    public void addChild(Tag toAdd) {
+        this.list.add(toAdd);
+    }
 
-    public boolean addAttribute(String name, String value)
-    {
+    public boolean addAttribute(String name, String value) {
         boolean flag = false;
         if (this.attributes.containsKey(name)) flag = true;
 
@@ -38,26 +39,21 @@ public class Tag
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Tag{" +
                 "name='" + name + '\'' +
                 '}';
     }
 
-    public void displayTag(int indent, int offset)
-    {
+    public void displayTag(int indent, int offset) {
         // build new
         String display_offset = "";
         if (indent > 0) display_offset = new String(new char[indent]).replace("\0", " ");
 
         // display name (and attributes if they exist)
-        if (attributes.containsKey("attrs"))
-        {
+        if (attributes.containsKey("attrs")) {
             System.out.println(display_offset + "└─ " + name + " (" + attributes.get("attrs") + ")");
-        }
-        else
-        {
+        } else {
             System.out.println(display_offset + "└─ " + name);
         }
 
