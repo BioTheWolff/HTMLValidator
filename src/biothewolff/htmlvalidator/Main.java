@@ -2,6 +2,7 @@ package biothewolff.htmlvalidator;
 
 import biothewolff.htmlvalidator.core.Constants;
 import biothewolff.htmlvalidator.core.read.HTMLReader;
+import biothewolff.htmlvalidator.ui.MainLayout;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -61,7 +62,7 @@ public class Main {
             }
 
         } else {
-            System.out.println("No file path provided. Aborting.");
+            new MainLayout();
         }
     }
 
